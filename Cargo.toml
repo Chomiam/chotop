@@ -1,0 +1,28 @@
+[package]
+name = "discord-overlay-daemon"
+version = "0.1.0"
+edition = "2021"
+description = "Discord voice overlay daemon for Wayland"
+authors = ["chomiam"]
+
+[dependencies]
+gtk4 = "0.9"
+gtk4-layer-shell = "0.4"
+tokio = { version = "1", features = ["full", "macros", "rt-multi-thread", "sync"] }
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+reqwest = { version = "0.11", features = ["rustls-tls"], default-features = false }
+gdk-pixbuf = "0.19"
+toml = "0.8"
+
+[[bin]]
+name = "discord-overlay-daemon"
+path = "src/main.rs"
+
+[[bin]]
+name = "discord-overlay-config"
+path = "src/config_app.rs"

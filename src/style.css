@@ -1,0 +1,162 @@
+/* Discord Overlay - Dark Theme */
+
+window {
+    background-color: transparent;
+}
+
+.overlay-container {
+    background-color: rgba(30, 31, 34, 0.9);
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 180px;
+}
+
+.user-row {
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.user-row:hover {
+    background-color: rgba(79, 84, 92, 0.4);
+}
+
+/* Avatar styling */
+.avatar {
+    border-radius: 50%;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.avatar-frame {
+    border-radius: 50%;
+    padding: 2px;
+    background-color: transparent;
+}
+
+.avatar-frame.speaking {
+    background-color: #23a55a;
+    animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 0.8; }
+    to { opacity: 1.0; }
+}
+
+/* Avatar placeholder for users without avatars */
+.avatar-placeholder {
+    background-color: #5865f2;
+    border-radius: 50%;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.avatar-initials {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Username styling */
+.username {
+    color: #f2f3f5;
+    font-size: 13px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.username.speaking {
+    color: #23a55a;
+}
+
+.username.muted {
+    color: #949ba4;
+}
+
+/* Status icons */
+.status-icons {
+    margin-left: auto;
+    padding-left: 8px;
+}
+
+.status-icon {
+    color: #ed4245;
+    font-size: 14px;
+    margin-left: 4px;
+}
+
+.status-icon.muted {
+    color: #ed4245;
+}
+
+.status-icon.deafened {
+    color: #ed4245;
+}
+
+.status-icon.video {
+    color: #23a55a;
+}
+
+/* Empty state */
+.empty-state {
+    color: #949ba4;
+    font-size: 12px;
+    padding: 16px;
+    font-style: italic;
+}
+
+/* Header */
+.overlay-header {
+    color: #949ba4;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px 8px 8px;
+    border-bottom: 1px solid rgba(79, 84, 92, 0.6);
+    margin-bottom: 4px;
+}
+
+/* Notification Window */
+.notification-window {
+    background-color: transparent;
+    padding: 8px;
+}
+
+.notification {
+    background-color: rgba(30, 31, 34, 0.95);
+    border: 1px solid rgba(88, 101, 242, 0.4);
+    border-left: 3px solid #5865f2;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 4px 0;
+    min-width: 280px;
+    max-width: 350px;
+    animation: slideInRight 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notification-title {
+    color: #f2f3f5;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.notification-body {
+    color: #b9bbbe;
+    font-size: 12px;
+    line-height: 1.4;
+}
