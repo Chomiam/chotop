@@ -1,3 +1,4 @@
+use gtk4::gdk;
 use gtk4::prelude::*;
 use gtk4::{ApplicationWindow, CssProvider};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
@@ -53,7 +54,15 @@ pub fn setup_layer_shell(window: &ApplicationWindow, config: &Config) {
 
     // Click-through - let mouse events pass through overlay
     if config.click_through {
-        window.set_can_target(false);
+        // Set empty input region to make window click-through
+        // Must be done after window is realized (surface exists)
+        let window_clone = window.clone();
+        window.connect_realize(move |_| {
+            if let Some(surface) = window_clone.surface() {
+                let empty_region = gdk::cairo::Region::create();
+                surface.set_input_region(&empty_region);
+            }
+        });
     }
 
     // Set namespace for compositor identification
