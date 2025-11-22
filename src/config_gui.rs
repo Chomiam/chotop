@@ -4,7 +4,7 @@ use config::{Config, Position};
 use gtk4::prelude::*;
 use gtk4::{
     Adjustment, Application, ApplicationWindow, Box as GtkBox, Button,
-    ComboBoxText, Label, Orientation, Scale, SpinButton,
+    ComboBoxText, Label, Orientation, Scale, SpinButton, Switch,
 };
 use std::process::Command;
 
@@ -220,6 +220,18 @@ fn build_ui(app: &Application) {
     avatar_box.append(&avatar_spin);
     appearance_section.append(&avatar_box);
 
+    // Click-through
+    let click_through_box = GtkBox::new(Orientation::Horizontal, 12);
+    let click_through_label = Label::new(Some("Click-Through:"));
+    click_through_label.set_width_chars(18);
+    click_through_label.set_xalign(0.0);
+    let click_through_switch = Switch::new();
+    click_through_switch.set_active(config.click_through);
+    click_through_switch.set_halign(gtk4::Align::Start);
+    click_through_box.append(&click_through_label);
+    click_through_box.append(&click_through_switch);
+    appearance_section.append(&click_through_box);
+
     main_box.append(&appearance_section);
 
     // Info Section
@@ -295,6 +307,7 @@ fn build_ui(app: &Application) {
             opacity: opacity_scale.value(),
             avatar_size: avatar_spin.value() as i32,
             port: config.port,
+            click_through: click_through_switch.is_active(),
         };
 
         new_config.save();

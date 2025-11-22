@@ -26,6 +26,13 @@ pub struct Config {
     pub port: u16,
     /// Avatar size in pixels
     pub avatar_size: i32,
+    /// Enable click-through (mouse events pass through overlay)
+    #[serde(default = "default_click_through")]
+    pub click_through: bool,
+}
+
+fn default_click_through() -> bool {
+    true
 }
 
 impl Default for Config {
@@ -36,6 +43,7 @@ impl Default for Config {
             opacity: 0.9,
             port: 6888,
             avatar_size: 32,
+            click_through: true,
         }
     }
 }

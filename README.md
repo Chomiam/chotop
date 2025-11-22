@@ -10,6 +10,7 @@ Discord voice overlay daemon for Wayland with GTK4 and layer-shell support.
 - 📺 **Channel Name Display** - Shows current voice channel name
 - 🔌 **Orbolay Compatible** - Works with OrbolayBridge plugin in Equicord/Equibop
 - 🪟 **Native Wayland** - Uses GTK4 layer-shell for true overlay support
+- 🖱️ **Click-Through** - Mouse events pass through overlay to underlying windows (configurable)
 - ⚙️ **Configurable** - Position, opacity, and other settings
 
 ## Screenshots
@@ -69,14 +70,26 @@ Then start Equibop/Equicord with OrbolayBridge plugin enabled.
 
 Config file location: `~/.config/discord-overlay/config.toml`
 
+You can edit the config file manually or use the GUI configuration tool:
+```bash
+chotop-config
+```
+
+### Configuration Options
+
 ```toml
 position = "TopLeft"  # TopLeft, TopRight, BottomLeft, BottomRight
-margin = 20
-opacity = 0.9
-port = 6888
-show_header = true
-avatar_size = 32
+margin = 20           # Distance from screen edge in pixels
+opacity = 0.9         # Transparency (0.1 to 1.0)
+port = 6888           # WebSocket port
+avatar_size = 32      # Avatar size in pixels (16-64)
+click_through = true  # Allow clicking through overlay (default: true)
 ```
+
+**Click-Through Mode:**
+- When `click_through = true` (default), mouse events pass through the overlay to windows below
+- Set to `false` if you want to interact with the overlay (hover effects, etc.)
+- Restart the daemon after changing this setting
 
 ## How it Works
 

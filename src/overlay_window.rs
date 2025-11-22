@@ -1,3 +1,4 @@
+use gtk4::prelude::*;
 use gtk4::{ApplicationWindow, CssProvider};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
@@ -49,6 +50,11 @@ pub fn setup_layer_shell(window: &ApplicationWindow, config: &Config) {
 
     // Keyboard passthrough - let keys go to underlying windows
     window.set_keyboard_mode(KeyboardMode::None);
+
+    // Click-through - let mouse events pass through overlay
+    if config.click_through {
+        window.set_can_target(false);
+    }
 
     // Set namespace for compositor identification
     window.set_namespace("discord-overlay");

@@ -60,6 +60,11 @@ impl NotificationWindow {
         window.set_margin(Edge::Bottom, 20);
         window.set_margin(Edge::Right, 20);
 
+        // Click-through - let mouse events pass through overlay
+        if config.click_through {
+            window.set_can_target(false);
+        }
+
         // Use notifications namespace
         window.set_namespace("discord-overlay-notifications");
     }
