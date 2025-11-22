@@ -1,0 +1,74 @@
+# Maintainer: Chomiam <chomiam@users.noreply.github.com>
+pkgname=chotop-bin
+pkgver=1.0.2
+pkgrel=1
+pkgdesc="Discord voice overlay daemon for Wayland with GTK4 and layer-shell support"
+arch=('x86_64')
+url="https://github.com/Chomiam/chotop"
+license=('MIT')
+depends=('gtk4' 'gtk4-layer-shell')
+optdepends=(
+  'equicord: Discord client with Vencord (recommended)'
+  'equibop: Alternative Discord client with Vencord'
+)
+provides=('chotop' 'discord-overlay-daemon')
+conflicts=('chotop')
+source=("${pkgname%-bin}-${pkgver}.tar.gz::${url}/releases/download/v${pkgver}/chotop-v${pkgver}-x86_64.tar.gz")
+sha256sums=('2845decc2795eaf7e2db6b80478bf1bccca2d4a65674175ff677ab8acd33c1d5')
+
+package() {
+  cd "$srcdir"
+
+  # Install binaries
+  install -Dm755 discord-overlay-daemon "$pkgdir/usr/bin/discord-overlay-daemon"
+  install -Dm755 chotop-config "$pkgdir/usr/bin/chotop-config"
+
+  # Install desktop entry for config GUI
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/chotop-config.desktop" << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chotop Configuration
+Comment=Configure Discord Overlay for Wayland
+Exec=chotop-config
+Icon=preferences-system
+Terminal=false
+Categories=Settings;Utility;
+Keywords=discord;overlay;wayland;voice;
+StartupNotify=true
+EOF
+
+  # Install documentation
+  install -Dm644 README.md "$pkgdir/usr/share/doc/${pkgname%-bin}/README.md"
+
+  # Install wrapper script for Equibop integration (optional)
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/equibop-overlay" << 'EOF'
+#!/bin/bash
+# Equibop launcher with overlay daemon
+
+# Kill any existing daemon
+pkill -f discord-overlay-daemon 2>/dev/null
+
+# Start overlay daemon in background
+DAEMON_PATH="/usr/bin/discord-overlay-daemon"
+
+if [ -x "$DAEMON_PATH" ]; then
+    echo "[Equibop Overlay] Starting daemon: $DAEMON_PATH"
+    GDK_BACKEND=wayland "$DAEMON_PATH" &
+    DAEMON_PID=$!
+    echo "[Equibop Overlay] Daemon started with PID $DAEMON_PID"
+
+    # Cleanup function
+    cleanup() {
+        echo "[Equibop Overlay] Stopping daemon"
+        kill $DAEMON_PID 2>/dev/null
+    }
+    trap cleanup EXIT
+else
+    echo "[Equibop Overlay] Warning: daemon not found at $DAEMON_PATH"
+fi
+
+# Launch Equibop
+exec /usr/bin/equibop "$@"
+EOF
+}

@@ -189,6 +189,86 @@ window {{
     border-bottom: 1px solid rgba(79, 84, 92, 0.6);
     margin-bottom: 4px;
 }}
+
+/* Notification Window */
+.notification-window {{
+    background-color: transparent;
+    padding: 8px;
+}}
+
+.notification {{
+    background-color: rgba(30, 31, 34, 0.95);
+    border: 1px solid rgba(88, 101, 242, 0.4);
+    border-left: 4px solid #5865f2;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 6px 0;
+    min-width: 320px;
+    max-width: 380px;
+    animation: slideInRight 0.3s ease-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+}}
+
+.notification.clickable:hover {{
+    background-color: rgba(40, 41, 44, 0.98);
+    border-left-color: #7289da;
+    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.3);
+    transform: translateY(-2px);
+    cursor: pointer;
+}}
+
+@keyframes slideInRight {{
+    from {{
+        opacity: 0;
+        transform: translateX(20px);
+    }}
+    to {{
+        opacity: 1;
+        transform: translateX(0);
+    }}
+}}
+
+/* Notification Avatar */
+.notification-avatar {{
+    border-radius: 50%;
+    min-width: 48px;
+    min-height: 48px;
+    max-width: 48px;
+    max-height: 48px;
+    border: 2px solid rgba(88, 101, 242, 0.3);
+}}
+
+.notification-avatar-placeholder {{
+    background: linear-gradient(135deg, #5865f2 0%, #7289da 100%);
+    border-radius: 50%;
+    min-width: 48px;
+    min-height: 48px;
+    border: 2px solid rgba(88, 101, 242, 0.5);
+}}
+
+.notification-avatar-initials {{
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}}
+
+/* Notification Content */
+.notification-title {{
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}}
+
+.notification-body {{
+    color: #dcddde;
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.95;
+}}
 "#,
         opacity = config.opacity,
         avatar_size = config.avatar_size,

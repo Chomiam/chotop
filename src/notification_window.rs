@@ -69,6 +69,9 @@ impl NotificationWindow {
     }
 
     pub fn show_notification(&mut self, notif: NotificationContent) {
+        tracing::info!("Showing notification: title='{}', body='{}', icon={:?}",
+            notif.title, notif.body, notif.icon);
+
         // Create notification container
         let notif_box = GtkBox::new(Orientation::Horizontal, 12);
         notif_box.add_css_class("notification");
@@ -78,19 +81,26 @@ impl NotificationWindow {
         avatar_box.set_valign(Align::Start);
 
         if let Some(icon_url) = &notif.icon {
+            tracing::info!("Downloading avatar from: {}", icon_url);
             // Try to load avatar from URL
-            if let Ok(icon_path) = Self::download_avatar(icon_url) {
-                let picture = Picture::for_filename(&icon_path);
-                picture.add_css_class("notification-avatar");
-                picture.set_size_request(48, 48);
-                picture.set_can_shrink(false);
-                avatar_box.append(&picture);
-            } else {
-                // Fallback to placeholder
-                let placeholder = Self::create_avatar_placeholder(&notif.title);
-                avatar_box.append(&placeholder);
+            match Self::download_avatar(icon_url) {
+                Ok(icon_path) => {
+                    tracing::info!("Avatar downloaded to: {:?}", icon_path);
+                    let picture = Picture::for_filename(&icon_path);
+                    picture.add_css_class("notification-avatar");
+                    picture.set_size_request(48, 48);
+                    picture.set_can_shrink(false);
+                    avatar_box.append(&picture);
+                }
+                Err(e) => {
+                    tracing::error!("Failed to download avatar: {}", e);
+                    // Fallback to placeholder
+                    let placeholder = Self::create_avatar_placeholder(&notif.title);
+                    avatar_box.append(&placeholder);
+                }
             }
         } else {
+            tracing::info!("No icon URL provided, using placeholder");
             // No icon provided, use placeholder
             let placeholder = Self::create_avatar_placeholder(&notif.title);
             avatar_box.append(&placeholder);

@@ -1,0 +1,18 @@
+pkgbase = chotop-bin
+	pkgdesc = Discord voice overlay daemon for Wayland with GTK4 and layer-shell support
+	pkgver = 1.0.2
+	pkgrel = 1
+	url = https://github.com/Chomiam/chotop
+	arch = x86_64
+	license = MIT
+	depends = gtk4
+	depends = gtk4-layer-shell
+	optdepends = equicord: Discord client with Vencord (recommended)
+	optdepends = equibop: Alternative Discord client with Vencord
+	provides = chotop
+	provides = discord-overlay-daemon
+	conflicts = chotop
+	source = chotop-1.0.2.tar.gz::https://github.com/Chomiam/chotop/releases/download/v1.0.2/chotop-v1.0.2-x86_64.tar.gz
+	sha256sums = 2845decc2795eaf7e2db6b80478bf1bccca2d4a65674175ff677ab8acd33c1d5
+
+pkgname = chotop-bin

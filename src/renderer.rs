@@ -143,6 +143,22 @@ impl OverlayRenderer {
 
     /// Handle voice state update
     pub fn on_voice_state_update(&mut self, update: VoiceUserPartial) {
+        tracing::debug!("Voice state update: user_id={}, channel_id={:?}, username={:?}",
+            update.user_id, update.channel_id, update.username);
+
+        // Check if user left (channel_id is None or empty)
+        let user_left = match &update.channel_id {
+            None => true,  // No channel_id means disconnected
+            Some(ch) => ch.is_empty(),  // Empty string also means disconnected
+        };
+
+        if user_left {
+            tracing::info!("User {} left the voice channel", update.user_id);
+            self.remove_user(&update.user_id);
+            self.container.set_visible(!self.users.is_empty());
+            return;
+        }
+
         if let Some(user) = self.users.get_mut(&update.user_id) {
             // Update existing user
             if let Some(speaking) = update.speaking {
@@ -158,18 +174,13 @@ impl OverlayRenderer {
                 user.streaming = streaming;
             }
 
-            // Check if user left (channel_id is None or different)
-            if update.channel_id.is_some() && update.channel_id.as_deref() == Some("") {
-                self.remove_user(&update.user_id);
-                return;
-            }
-
             // Update widget
             if let Some(user_widget) = self.user_widgets.get(&update.user_id) {
                 Self::update_user_widget(&user_widget.row, user);
             }
         } else if update.username.is_some() {
             // New user joined
+            tracing::info!("User {} joined the voice channel", update.user_id);
             let user = VoiceUser {
                 user_id: update.user_id.clone(),
                 username: update.username.unwrap_or_default(),
