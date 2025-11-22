@@ -126,7 +126,10 @@ async fn handle_connection(
         }
     }
 
-    // Send channel left when disconnected
-    let _ = tx.send(OverlayEvent::ChannelLeft).await;
+    // DON'T send channel left on WebSocket disconnect!
+    // The plugin will send CHANNEL_LEFT if the user actually leaves the voice channel.
+    // A WebSocket disconnect is just a technical disconnection (daemon restart, etc.)
+    // and we want to keep the overlay state for seamless reconnection.
+    info!("WebSocket connection closed, waiting for reconnection...");
     Ok(())
 }
