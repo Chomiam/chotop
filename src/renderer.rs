@@ -143,13 +143,14 @@ impl OverlayRenderer {
 
     /// Handle voice state update
     pub fn on_voice_state_update(&mut self, update: VoiceUserPartial) {
-        tracing::debug!("Voice state update: user_id={}, channel_id={:?}, username={:?}",
-            update.user_id, update.channel_id, update.username);
+        tracing::info!("Voice state update: user_id={}, channel_id={:?}, username={:?}, speaking={:?}, mute={:?}",
+            update.user_id, update.channel_id, update.username, update.speaking, update.mute);
 
-        // Check if user left (channel_id is None or empty)
+        // Check if user left: ONLY if channel_id is explicitly Some("") (empty string)
+        // If channel_id is None, it means "no change" (not provided in this update)
         let user_left = match &update.channel_id {
-            None => true,  // No channel_id means disconnected
-            Some(ch) => ch.is_empty(),  // Empty string also means disconnected
+            Some(ch) if ch.is_empty() => true,  // Empty string = user left
+            _ => false,  // None or Some(channel_id) = user still connected
         };
 
         if user_left {
