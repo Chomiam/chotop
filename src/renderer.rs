@@ -143,14 +143,59 @@ impl OverlayRenderer {
 
     /// Handle voice state update
     pub fn on_voice_state_update(&mut self, update: VoiceUserPartial) {
-        tracing::info!("Voice state update: user_id={}, channel_id={:?}, username={:?}, speaking={:?}, mute={:?}",
-            update.user_id, update.channel_id, update.username, update.speaking, update.mute);
+        tracing::info!("Voice state update: user_id={}, channel_id={:?}, username={:?}, speaking={:?}, mute={:?}, deaf={:?}, streaming={:?}",
+            update.user_id, update.channel_id, update.username, update.speaking, update.mute, update.deaf, update.streaming);
 
-        // Check if user left: ONLY if channel_id is explicitly Some("") (empty string)
-        // If channel_id is None, it means "no change" (not provided in this update)
-        let user_left = match &update.channel_id {
-            Some(ch) if ch.is_empty() => true,  // Empty string = user left
-            _ => false,  // None or Some(channel_id) = user still connected
+        // Check if user left or changed channel
+        // CRITICAL: The OrbolayBridge plugin has TWO different handlers that send VOICE_STATE_UPDATE:
+        // 1. handleSpeaking: sends only { userId, speaking } - channelId is OMITTED (undefined in JS)
+        // 2. handleVoiceStateUpdates: sends full state including channelId (can be null if disconnected)
+        //
+        // Problem: Both "omitted field" and "null value" deserialize as None in Rust!
+        // Solution: Use heuristic - if ONLY speaking is provided (all other fields are None),
+        // it's a SPEAKING update and we ignore channelId. Otherwise, it's a full update.
+
+        let is_speaking_only_update = update.username.is_none()
+            && update.avatar_url.is_none()
+            && update.deaf.is_none()
+            && update.mute.is_none()
+            && update.streaming.is_none()
+            && update.speaking.is_some();
+
+        let user_left = if is_speaking_only_update {
+            // This is a SPEAKING update - ignore channelId (it's omitted, not null)
+            false
+        } else {
+            match &update.channel_id {
+                None => {
+                    // In a full VOICE_STATE_UPDATE, channelId: None means null (disconnected)
+                    tracing::info!("User {} disconnected from voice (channelId is null in full update)", update.user_id);
+                    true
+                },
+                Some(ch) if ch.is_empty() => {
+                    // Empty string also means disconnection
+                    tracing::info!("User {} disconnected from voice (empty channelId)", update.user_id);
+                    true
+                },
+                Some(ch) => {
+                    // User is in a channel - check if it's different from their current one
+                    if let Some(user) = self.users.get(&update.user_id) {
+                        if let Some(our_channel) = &user.channel_id {
+                            if ch != our_channel {
+                                tracing::info!("User {} moved from channel {} to {}", update.user_id, our_channel, ch);
+                                true
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    } else {
+                        // User not in our list yet - don't remove them
+                        false
+                    }
+                },
+            }
         };
 
         if user_left {
@@ -175,16 +220,29 @@ impl OverlayRenderer {
                 user.streaming = streaming;
             }
 
+            // Update username if provided (might be missing initially after daemon restart)
+            if let Some(username) = update.username {
+                if !username.is_empty() && user.username.is_empty() {
+                    user.username = username;
+                    // Re-render widget with new username
+                    if let Some(user_widget) = self.user_widgets.get(&update.user_id) {
+                        Self::update_user_widget(&user_widget.row, user);
+                    }
+                }
+            }
+
             // Update widget
             if let Some(user_widget) = self.user_widgets.get(&update.user_id) {
                 Self::update_user_widget(&user_widget.row, user);
             }
-        } else if update.username.is_some() {
-            // New user joined
-            tracing::info!("User {} joined the voice channel", update.user_id);
+        } else {
+            // User not in our list - add them!
+            // This handles daemon restarts where we receive VOICE_STATE_UPDATE before CHANNEL_JOINED
+            // If we're receiving updates about this user, they must be in a voice channel
+            tracing::info!("Adding unknown user {} (daemon likely restarted)", update.user_id);
             let user = VoiceUser {
                 user_id: update.user_id.clone(),
-                username: update.username.unwrap_or_default(),
+                username: update.username.unwrap_or_else(|| format!("User {}", &update.user_id[..8])),
                 avatar_url: update.avatar_url,
                 channel_id: update.channel_id,
                 deaf: update.deaf.unwrap_or(false),
