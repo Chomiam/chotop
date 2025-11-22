@@ -24,8 +24,6 @@ pub struct Config {
     pub opacity: f64,
     /// WebSocket port
     pub port: u16,
-    /// Show header "Voice Connected"
-    pub show_header: bool,
     /// Avatar size in pixels
     pub avatar_size: i32,
 }
@@ -37,7 +35,6 @@ impl Default for Config {
             margin: 20,
             opacity: 0.9,
             port: 6888,
-            show_header: true,
             avatar_size: 32,
         }
     }

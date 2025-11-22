@@ -17,7 +17,6 @@ pub struct AvatarRequest {
 /// Renders the voice overlay UI
 pub struct OverlayRenderer {
     container: GtkBox,
-    header: Label,
     users_box: GtkBox,
     user_widgets: HashMap<String, UserWidget>,
     users: HashMap<String, VoiceUser>,
@@ -35,12 +34,6 @@ impl OverlayRenderer {
         let container = GtkBox::new(Orientation::Vertical, 0);
         container.add_css_class("overlay-container");
 
-        // Header
-        let header = Label::new(Some("Voice Connected"));
-        header.add_css_class("overlay-header");
-        header.set_halign(Align::Start);
-        container.append(&header);
-
         // Users container
         let users_box = GtkBox::new(Orientation::Vertical, 0);
         users_box.add_css_class("users-box");
@@ -51,7 +44,6 @@ impl OverlayRenderer {
 
         Self {
             container,
-            header,
             users_box,
             user_widgets: HashMap::new(),
             users: HashMap::new(),
@@ -65,6 +57,50 @@ impl OverlayRenderer {
 
     pub fn widget(&self) -> &GtkBox {
         &self.container
+    }
+
+    /// Enable test mode with fake data
+    pub fn enable_test_mode(&mut self) {
+        // Create fake users for testing
+        let test_users = vec![
+            VoiceUser {
+                user_id: "test1".to_string(),
+                username: "Alice".to_string(),
+                avatar_url: None,
+                channel_id: Some("test-channel".to_string()),
+                deaf: false,
+                mute: false,
+                streaming: false,
+                speaking: true,
+            },
+            VoiceUser {
+                user_id: "test2".to_string(),
+                username: "Bob".to_string(),
+                avatar_url: None,
+                channel_id: Some("test-channel".to_string()),
+                deaf: false,
+                mute: true,
+                streaming: false,
+                speaking: false,
+            },
+            VoiceUser {
+                user_id: "test3".to_string(),
+                username: "Charlie".to_string(),
+                avatar_url: None,
+                channel_id: Some("test-channel".to_string()),
+                deaf: true,
+                mute: false,
+                streaming: true,
+                speaking: false,
+            },
+        ];
+
+        self.on_channel_joined(test_users, "Test Channel".to_string());
+    }
+
+    /// Disable test mode
+    pub fn disable_test_mode(&mut self) {
+        self.on_channel_left();
     }
 
     /// Update avatar for a user
@@ -87,10 +123,7 @@ impl OverlayRenderer {
     }
 
     /// Handle channel joined - set all users
-    pub fn on_channel_joined(&mut self, users: Vec<VoiceUser>, channel_name: String) {
-        // Update header with channel name
-        self.header.set_text(&channel_name);
-
+    pub fn on_channel_joined(&mut self, users: Vec<VoiceUser>, _channel_name: String) {
         // Clear existing
         self.clear();
 

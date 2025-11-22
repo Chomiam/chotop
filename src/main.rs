@@ -1,5 +1,7 @@
 mod avatar_cache;
 mod config;
+mod control_ipc;
+mod control_window;
 mod discord_data;
 mod ipc;
 mod notification_window;
@@ -18,6 +20,7 @@ use tracing_subscriber::FmtSubscriber;
 
 use avatar_cache::AvatarCache;
 use config::Config;
+use control_ipc::{ControlCommand, ControlIpcServer};
 use discord_data::OverlayEvent;
 use ipc::WebSocketServer;
 use notification_window::NotificationWindow;
@@ -82,6 +85,9 @@ fn build_ui(app: &Application) {
     // Create channel for avatar responses (user_id, path)
     let (avatar_done_tx, mut avatar_done_rx) = mpsc::channel::<(String, PathBuf)>(100);
 
+    // Create channel for control commands
+    let (control_tx, mut control_rx) = mpsc::channel::<ControlCommand>(100);
+
     // Set avatar sender in renderer
     renderer.borrow_mut().set_avatar_sender(avatar_tx);
 
@@ -104,6 +110,61 @@ fn build_ui(app: &Application) {
             while let Some(request) = avatar_rx.recv().await {
                 if let Some(path) = cache.get_avatar(&request.user_id, &request.avatar_hash).await {
                     let _ = avatar_done_tx_clone.send((request.user_id, path)).await;
+                }
+            }
+        });
+    });
+
+    // Spawn IPC control server
+    let control_tx_clone = control_tx.clone();
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+        rt.block_on(async {
+            use tokio::io::AsyncReadExt;
+            use tokio::net::UnixListener;
+
+            let socket_path = ControlIpcServer::get_socket_path();
+
+            // Remove old socket if exists
+            if socket_path.exists() {
+                let _ = std::fs::remove_file(&socket_path);
+            }
+
+            match UnixListener::bind(&socket_path) {
+                Ok(listener) => {
+                    info!("IPC control server listening on {:?}", socket_path);
+
+                    loop {
+                        match listener.accept().await {
+                            Ok((mut stream, _)) => {
+                                let mut buffer = vec![0u8; 4096];
+
+                                match stream.read(&mut buffer).await {
+                                    Ok(n) if n > 0 => {
+                                        match serde_json::from_slice::<ControlCommand>(&buffer[..n]) {
+                                            Ok(command) => {
+                                                info!("Received IPC command: {:?}", command);
+                                                let _ = control_tx_clone.send(command).await;
+                                            }
+                                            Err(e) => {
+                                                tracing::error!("Failed to deserialize command: {}", e);
+                                            }
+                                        }
+                                    }
+                                    Err(e) => {
+                                        tracing::error!("Failed to read from socket: {}", e);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            Err(e) => {
+                                tracing::error!("Failed to accept connection: {}", e);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to bind IPC socket: {}", e);
                 }
             }
         });
@@ -142,6 +203,35 @@ fn build_ui(app: &Application) {
     glib::spawn_future_local(async move {
         while let Some((user_id, path)) = avatar_done_rx.recv().await {
             renderer_clone2.borrow_mut().set_avatar(&user_id, &path);
+        }
+    });
+
+    // Setup GTK main context to receive control commands
+    let renderer_clone3 = renderer.clone();
+    glib::spawn_future_local(async move {
+        while let Some(command) = control_rx.recv().await {
+            match command {
+                ControlCommand::EnableTestMode => {
+                    info!("Enabling test mode");
+                    renderer_clone3.borrow_mut().enable_test_mode();
+                }
+                ControlCommand::DisableTestMode => {
+                    info!("Disabling test mode");
+                    renderer_clone3.borrow_mut().disable_test_mode();
+                }
+                ControlCommand::UpdateConfig(_config) => {
+                    info!("Config update received (not yet implemented)");
+                    // TODO: Reload CSS and reposition windows
+                }
+                ControlCommand::Restart => {
+                    info!("Restart requested (not yet implemented)");
+                    // TODO: Implement daemon restart
+                }
+                ControlCommand::Quit => {
+                    info!("Quit requested");
+                    std::process::exit(0);
+                }
+            }
         }
     });
 

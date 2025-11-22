@@ -13,3 +13,7 @@ Cargo.lock
 # OS
 .DS_Store
 Thumbs.db
+
+# Release archives
+*.tar.gz
+*.zip

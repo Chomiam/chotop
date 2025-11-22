@@ -35,11 +35,31 @@ echo ""
 echo "Building Chotop..."
 cargo build --release
 
-# Install binary
+# Install binaries
 echo "Installing to ~/.local/bin..."
 mkdir -p ~/.local/bin
 cp target/release/discord-overlay-daemon ~/.local/bin/
+cp target/release/chotop-config ~/.local/bin/
 chmod +x ~/.local/bin/discord-overlay-daemon
+chmod +x ~/.local/bin/chotop-config
+
+# Install desktop entry for config GUI
+echo "Installing desktop entry..."
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/chotop-config.desktop << 'DESKTOP_EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chotop Configuration
+Comment=Configure Discord Overlay for Wayland
+Exec=chotop-config
+Icon=preferences-system
+Terminal=false
+Categories=Settings;Utility;
+Keywords=discord;overlay;wayland;voice;
+StartupNotify=true
+DESKTOP_EOF
+update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
 # Create wrapper for Equibop if not exists
 if command -v equibop &> /dev/null; then
@@ -86,12 +106,17 @@ fi
 echo ""
 echo "=== Installation Complete! ==="
 echo ""
-echo "The daemon has been installed to: ~/.local/bin/discord-overlay-daemon"
+echo "Installed components:"
+echo "  - discord-overlay-daemon: ~/.local/bin/discord-overlay-daemon"
+echo "  - chotop-config: ~/.local/bin/chotop-config"
+echo "  - Desktop entry: ~/.local/share/applications/chotop-config.desktop"
 echo ""
 echo "Usage:"
 echo "  1. Manual: GDK_BACKEND=wayland discord-overlay-daemon"
 if command -v equibop &> /dev/null; then
     echo "  2. With Equibop: equibop-overlay"
 fi
+echo "  3. Configure: Launch 'Chotop Configuration' from your application menu"
+echo "     or run: chotop-config"
 echo ""
 echo "Make sure OrbolayBridge plugin is enabled in Equibop!"
